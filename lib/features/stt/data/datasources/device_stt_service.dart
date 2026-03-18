@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'package:flutter/services.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:real_time_translation/core/errors/app_exception.dart';
 import 'package:real_time_translation/features/stt/domain/repositories/stt_service.dart';
 
 /// On-device STT using speech_to_text (offline-capable on both iOS and Android).
@@ -22,28 +24,34 @@ class DeviceSttService implements SttService {
   }
 
   Future<void> _initAndListen(String localeId) async {
-    final available = await _speech.initialize(
-      onError: (error) {
-        _controller?.addError(SttException(error.errorMsg));
-      },
-      onStatus: (status) {
-        if (status == 'done' || status == 'notListening') {
-          // Restart listening for continuous mode
-          if (_controller != null && !_controller!.isClosed) {
-            _listenOnce(localeId);
+    try {
+      final available = await _speech.initialize(
+        onError: (error) {
+          _controller?.addError(SttException(error.errorMsg));
+        },
+        onStatus: (status) {
+          if (status == 'done' || status == 'notListening') {
+            // Restart listening for continuous mode
+            if (_controller != null && !_controller!.isClosed) {
+              _listenOnce(localeId);
+            }
           }
-        }
-      },
-    );
-
-    if (!available) {
-      _controller?.addError(
-        const SttException('Speech recognition not available'),
+        },
       );
-      return;
-    }
 
-    _listenOnce(localeId);
+      if (!available) {
+        _controller?.addError(
+          const SttException('Speech recognition not available'),
+        );
+        return;
+      }
+
+      _listenOnce(localeId);
+    } on PlatformException catch (e) {
+      _controller?.addError(
+        SttException(e.message ?? 'STT initialization failed'),
+      );
+    }
   }
 
   void _listenOnce(String localeId) {
@@ -76,12 +84,4 @@ class DeviceSttService implements SttService {
   Future<void> dispose() async {
     await stopListening();
   }
-}
-
-class SttException implements Exception {
-  const SttException(this.message);
-  final String message;
-
-  @override
-  String toString() => 'SttException: $message';
 }
