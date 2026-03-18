@@ -1,0 +1,73 @@
+name: real_time_translation
+description: "Real-time translation app with offline-first architecture"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.8
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # STT
+  speech_to_text: ^7.0.0
+  record: ^6.0.0
+
+  # Translation
+  google_mlkit_translation: ^0.12.0
+
+  # TTS
+  flutter_tts: ^4.2.0
+
+  # State management
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+
+  # Ads & IAP
+  google_mobile_ads: ^5.3.0
+  in_app_purchase: ^3.2.0
+
+  # Local storage
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  path_provider: ^2.1.5
+
+  # Routing
+  go_router: ^14.8.1
+
+  # Permissions & connectivity
+  permission_handler: ^11.4.0
+  connectivity_plus: ^6.1.4
+
+  # Networking
+  dio: ^5.7.0
+
+  # Code generation support
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+
+  # Firebase
+  firebase_core: ^3.12.1
+  firebase_remote_config: ^5.3.4
+
+  # Environment variables
+  flutter_dotenv: ^5.2.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+  mocktail: ^1.0.4
+  build_runner: ^2.4.15
+  freezed: ^2.5.8
+  json_serializable: ^6.9.4
+  riverpod_generator: ^2.6.3
+
+flutter:
+  uses-material-design: true
+  assets:
+    - .env
