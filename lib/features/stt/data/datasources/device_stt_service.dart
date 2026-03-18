@@ -10,6 +10,7 @@ class DeviceSttService implements SttService {
 
   final stt.SpeechToText _speech;
   StreamController<SttResult>? _controller;
+  bool _initialized = false;
 
   @override
   bool get isListening => _speech.isListening;
@@ -25,25 +26,35 @@ class DeviceSttService implements SttService {
 
   Future<void> _initAndListen(String localeId) async {
     try {
-      final available = await _speech.initialize(
-        onError: (error) {
-          _controller?.addError(SttException(error.errorMsg));
-        },
-        onStatus: (status) {
-          if (status == 'done' || status == 'notListening') {
-            // Restart listening for continuous mode
-            if (_controller != null && !_controller!.isClosed) {
-              _listenOnce(localeId);
+      if (!_initialized) {
+        final available = await _speech.initialize(
+          onError: (error) {
+            if (error.errorMsg == 'error_speech_timeout' ||
+                error.errorMsg == 'error_no_match') {
+              if (_controller != null && !_controller!.isClosed) {
+                _listenOnce(localeId);
+              }
+              return;
             }
-          }
-        },
-      );
-
-      if (!available) {
-        _controller?.addError(
-          const SttException('Speech recognition not available'),
+            _controller?.addError(SttException(error.errorMsg));
+          },
+          onStatus: (status) {
+            if (status == 'done' || status == 'notListening') {
+              if (_controller != null && !_controller!.isClosed) {
+                _listenOnce(localeId);
+              }
+            }
+          },
         );
-        return;
+
+        if (!available) {
+          _controller?.addError(
+            const SttException('Speech recognition not available'),
+          );
+          return;
+        }
+
+        _initialized = true;
       }
 
       _listenOnce(localeId);
@@ -83,5 +94,6 @@ class DeviceSttService implements SttService {
   @override
   Future<void> dispose() async {
     await stopListening();
+    _initialized = false;
   }
 }
