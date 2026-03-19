@@ -11,6 +11,7 @@ class DeviceSttService implements SttService {
   final stt.SpeechToText _speech;
   StreamController<SttResult>? _controller;
   bool _initialized = false;
+  bool _restarting = false;
 
   @override
   bool get isListening => _speech.isListening;
@@ -31,18 +32,14 @@ class DeviceSttService implements SttService {
           onError: (error) {
             if (error.errorMsg == 'error_speech_timeout' ||
                 error.errorMsg == 'error_no_match') {
-              if (_controller != null && !_controller!.isClosed) {
-                _listenOnce(localeId);
-              }
+              _restartListening(localeId);
               return;
             }
             _controller?.addError(SttException(error.errorMsg));
           },
           onStatus: (status) {
             if (status == 'done' || status == 'notListening') {
-              if (_controller != null && !_controller!.isClosed) {
-                _listenOnce(localeId);
-              }
+              _restartListening(localeId);
             }
           },
         );
@@ -63,6 +60,17 @@ class DeviceSttService implements SttService {
         SttException(e.message ?? 'STT initialization failed'),
       );
     }
+  }
+
+  void _restartListening(String localeId) {
+    if (_restarting || _controller == null || _controller!.isClosed) return;
+    _restarting = true;
+    Future.delayed(const Duration(milliseconds: 500), () {
+      _restarting = false;
+      if (_controller != null && !_controller!.isClosed) {
+        _listenOnce(localeId);
+      }
+    });
   }
 
   void _listenOnce(String localeId) {
